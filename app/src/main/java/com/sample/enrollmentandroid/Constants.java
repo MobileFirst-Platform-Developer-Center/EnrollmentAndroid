@@ -12,8 +12,6 @@ public class Constants {
     static final String ACTION_PINCODE_CHALLENGE_CANCEL = "com.sample.enrollmentandroid.broadcast.pincode.challenge.cancel";
     static final String ACTION_PINCODE_LOGOUT_SUCCESS = "com.sample.enrollmentandroid.broadcast.pincode.logout.success";
     static final String ACTION_PINCODE_CHALLENGE_FAILURE = "com.sample.enrollmentandroid.broadcast.pincode.challenge.failure";
-
-    static final String ACTION_ISENROLLED_LOGOUT_SUCCESS = "com.sample.enrollmentandroid.broadcast.isenrolled.logout.success";
-
+    
     static final String ACTION_LOGOUT = "com.sample.enrollmentandroid.broadcast.logout";
 }

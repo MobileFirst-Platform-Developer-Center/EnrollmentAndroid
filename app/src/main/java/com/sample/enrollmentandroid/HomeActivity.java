@@ -56,6 +56,7 @@ public class HomeActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
+                Log.d(activityName, "getPublicDataBtn");
                 URI adapterPath = null;
                 try {
                     adapterPath = new URI("/adapters/Enrollment/publicData");
@@ -83,6 +84,7 @@ public class HomeActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
+                Log.d(activityName, "getTransactionsBtn");
                 URI adapterPath = null;
                 try {
                     adapterPath = new URI("/adapters/Enrollment/transactions");
@@ -110,6 +112,7 @@ public class HomeActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
+                Log.d(activityName, "getBalanceBtn");
                 URI adapterPath = null;
                 try {
                     adapterPath = new URI("/adapters/Enrollment/balance");
@@ -242,12 +245,14 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void enrollAfterFailure(String errorMsg) {
+        Log.d(activityName, "enrollAfterFailure");
         if (errorMsg.equals("Account blocked")){
             enroll();
         }
     }
 
     private void showPinCodePopup(final String errorMsg) {
+        Log.d(activityName, "showPinCodePopup");
         Runnable run = new Runnable() {
             public void run() {
                 final Intent intent = new Intent();
@@ -282,6 +287,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void enroll(){
+        Log.d(activityName, "enroll");
         updateTextView("");
         WLAuthorizationManager.getInstance().obtainAccessToken("setPinCode", new WLAccessTokenListener() {
             @Override
@@ -298,6 +304,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void showSetPincodeDialog(final String msg) {
+        Log.d(activityName, "showSetPincodeDialog");
         Runnable run = new Runnable() {
             public void run() {
                 final EditText pinCodeTxt = new EditText(_this);
@@ -330,6 +337,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void setPinCode(String pinCode) {
+        Log.d(activityName, "setPinCode");
         if (pinCode.equals("")){
             showSetPincodeDialog("Pincode is required, please try again");
         } else {
@@ -356,6 +364,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void changeUIState(final String buttonsState, final Boolean actionState){
+        Log.d(activityName, "changeUIState");
         Runnable run = new Runnable() {
             public void run() {
                 resultTxt.setText("");
@@ -375,6 +384,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void isEnrolledLogout() {
+        Log.d(activityName, "isEnrolledLogout");
         WLAuthorizationManager.getInstance().logout("IsEnrolled", new WLLogoutResponseListener() {
             @Override
             public void onSuccess() {
@@ -408,6 +418,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public void updateTextView(final String str) {
+        Log.d(activityName, "updateTextView");
         Runnable run = new Runnable() {
             public void run() {
                 resultTxt.setText(str);
