@@ -1,4 +1,4 @@
-package sample.com.enrollmentandroid;
+package com.sample.enrollmentandroid;
 
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;

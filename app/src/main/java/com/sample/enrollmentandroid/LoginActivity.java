@@ -1,4 +1,4 @@
-package sample.com.enrollmentandroid;
+package com.sample.enrollmentandroid;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

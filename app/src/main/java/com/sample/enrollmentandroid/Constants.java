@@ -1,4 +1,4 @@
-package sample.com.enrollmentandroid;
+package com.sample.enrollmentandroid;
 
 public class Constants {
     static final String ACTION_USERLOGIN_SUBMIT_ANSWER = "com.sample.enrollmentandroid.broadcast.userlogin.submit.answer";
