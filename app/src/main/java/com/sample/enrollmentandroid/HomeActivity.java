@@ -155,6 +155,7 @@ public class HomeActivity extends AppCompatActivity {
         loginRequiredReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Log.d("loginRequiredReceiver","Receive login required requests");
                 Intent loginActivity = new Intent(_this, LoginActivity.class);
                 _this.startActivity(loginActivity);
             }
@@ -188,6 +189,7 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(activityName, "onStart");
         getTransactionsBtn.setVisibility(View.INVISIBLE);
         getBalanceBtn.setVisibility(View.INVISIBLE);
 
@@ -263,6 +265,7 @@ public class HomeActivity extends AppCompatActivity {
     private void enrollAfterFailure(String errorMsg) {
         Log.d(activityName, "enrollAfterFailure");
         if (errorMsg.equals("Account blocked")){
+            //changeUIState("invisible", false);
             enroll();
         }
     }
@@ -305,7 +308,7 @@ public class HomeActivity extends AppCompatActivity {
     private void enroll(){
         Log.d(activityName, "enroll");
         updateTextView("");
-        WLAuthorizationManager.getInstance().obtainAccessToken("setPinCode", new WLAccessTokenListener() {
+        WLAuthorizationManager.getInstance().obtainAccessToken("EnrollmentUserLogin", new WLAccessTokenListener() {
             @Override
             public void onSuccess(AccessToken accessToken) {
                 Log.d("setPinCode", "onSuccess");
@@ -446,6 +449,7 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        Log.d(activityName, "onPause");
         LocalBroadcastManager.getInstance(this).unregisterReceiver(picodeRequiredReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(loginRequiredReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(isEnrolledLogoutRequiredReceiver);

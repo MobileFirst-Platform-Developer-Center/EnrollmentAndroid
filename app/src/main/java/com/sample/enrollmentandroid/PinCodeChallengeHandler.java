@@ -27,12 +27,12 @@ import com.worklight.wlclient.api.WLAuthorizationManager;
 import com.worklight.wlclient.api.WLClient;
 import com.worklight.wlclient.api.WLFailResponse;
 import com.worklight.wlclient.api.WLLogoutResponseListener;
-import com.worklight.wlclient.api.challengehandler.WLChallengeHandler;
+import com.worklight.wlclient.api.challengehandler.SecurityCheckChallengeHandler;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class PinCodeChallengeHandler extends WLChallengeHandler{
+public class PinCodeChallengeHandler extends SecurityCheckChallengeHandler{
     private Context context;
     private LocalBroadcastManager broadcastManager;
     private String challengeHandlerName = "PinCodeChallengeHandler";
@@ -57,7 +57,7 @@ public class PinCodeChallengeHandler extends WLChallengeHandler{
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(challengeHandlerName, "cancel");
-                submitFailure(null);
+                cancel();
             }
         },new IntentFilter(Constants.ACTION_PINCODE_CHALLENGE_CANCEL));
 
