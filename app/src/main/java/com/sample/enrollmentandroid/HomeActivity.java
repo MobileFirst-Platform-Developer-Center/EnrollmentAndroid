@@ -52,7 +52,7 @@ public class HomeActivity extends AppCompatActivity {
     private boolean isEnrolled = false;
     private HomeActivity _this;
     private Button getBalanceBtn, getTransactionsBtn;
-    private TextView resultTxt;
+    private TextView resultTxt, helloUserTxt;
     private BroadcastReceiver loginRequiredReceiver, picodeRequiredReceiver, enrollmentRequiredReceiver, isEnrolledLogoutRequiredReceiver;
 
     @Override
@@ -65,6 +65,7 @@ public class HomeActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         resultTxt = (TextView) findViewById(R.id.resultTxt);
+        helloUserTxt  = (TextView) findViewById(R.id.helloUser);
 
         Button getPublicDataBtn = (Button) findViewById(R.id.getPublicData);
         assert getPublicDataBtn != null;
@@ -265,7 +266,7 @@ public class HomeActivity extends AppCompatActivity {
     private void enrollAfterFailure(String errorMsg) {
         Log.d(activityName, "enrollAfterFailure");
         if (errorMsg.equals("Account blocked")){
-            //changeUIState("invisible", false);
+            changeUIState("invisible", false);
             enroll();
         }
     }
@@ -308,18 +309,19 @@ public class HomeActivity extends AppCompatActivity {
     private void enroll(){
         Log.d(activityName, "enroll");
         updateTextView("");
-        WLAuthorizationManager.getInstance().obtainAccessToken("EnrollmentUserLogin", new WLAccessTokenListener() {
+        WLAccessTokenListener MyListener = new WLAccessTokenListener() {
             @Override
             public void onSuccess(AccessToken accessToken) {
-                Log.d("setPinCode", "onSuccess");
+                Log.d("obtainAccessToken", "onSuccess");
                 showSetPincodeDialog("");
             }
 
             @Override
             public void onFailure(WLFailResponse wlFailResponse) {
-                Log.d("setPinCode", "onFailure: " + wlFailResponse.toString());
+                Log.d("obtainAccessToken", "onFailure: " + wlFailResponse.toString());
             }
-        });
+        };
+        WLAuthorizationManager.getInstance().obtainAccessToken("EnrollmentUserLogin", MyListener);
     }
 
     private void showSetPincodeDialog(final String msg) {
@@ -410,7 +412,7 @@ public class HomeActivity extends AppCompatActivity {
                 Log.d("IsEnrolled", "Logout onSuccess");
                 URI adapterPath = null;
                 try {
-                    adapterPath = new URI("/adapters/Enrollment/deletePinCode");
+                    adapterPath = new URI("/adapters/Enrollment/unenroll");
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }

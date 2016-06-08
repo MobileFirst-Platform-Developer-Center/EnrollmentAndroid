@@ -33,8 +33,9 @@
         android:layout_height="wrap_content"
         android:text="Get public data"
         android:id="@+id/getPublicData"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
+        android:layout_below="@+id/helloUser"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="20dp" />
 
     <Button
         android:layout_width="wrap_content"
@@ -76,5 +77,14 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:background="#dbd9d9" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Hello, Guest"
+        android:id="@+id/helloUser"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>

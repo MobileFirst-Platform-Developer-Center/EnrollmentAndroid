@@ -26,5 +26,6 @@ public class EnrollmentApplication extends Application {
         WLClient.createInstance(this);
         PinCodeChallengeHandler.createAndRegister();
         UserLoginChallengeHandler.createAndRegister();
+        IsEnrolledChallengeHandler.createAndRegister();
     }
 }

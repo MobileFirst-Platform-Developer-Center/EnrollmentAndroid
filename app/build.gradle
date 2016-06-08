@@ -64,4 +64,5 @@ dependencies {
 //            ext: 'aar',
 //            transitive: true
     compile 'com.ibm.mobile.foundation:ibmmobilefirstplatformfoundation:8.0.Beta1-SNAPSHOT'
+
 }
