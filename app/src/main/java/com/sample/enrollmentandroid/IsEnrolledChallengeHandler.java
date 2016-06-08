@@ -24,7 +24,6 @@ import org.json.JSONObject;
 
 public class IsEnrolledChallengeHandler extends SecurityCheckChallengeHandler{
 
-    private String challengeHandlerName = "IsEnrolledChallengeHandler";
     private static String securityCheckName = "IsEnrolled";
 
     public IsEnrolledChallengeHandler() {
@@ -39,6 +38,6 @@ public class IsEnrolledChallengeHandler extends SecurityCheckChallengeHandler{
 
     @Override
     public void handleChallenge(JSONObject challenge) {
-        Log.d(challengeHandlerName, "handleChallenge" + challenge.toString());
+        Log.d("IsEnrolledCH", "handleChallenge" + challenge.toString());
     }
 }

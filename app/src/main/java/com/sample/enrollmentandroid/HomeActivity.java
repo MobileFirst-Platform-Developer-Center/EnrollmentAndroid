@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -44,12 +45,15 @@ import com.worklight.wlclient.api.WLResponse;
 import com.worklight.wlclient.api.WLResponseListener;
 import com.worklight.wlclient.auth.AccessToken;
 
+import org.json.JSONException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
 public class HomeActivity extends AppCompatActivity {
     private final String activityName = "HomeActivity";
     private boolean isEnrolled = false;
+    private SharedPreferences prefs;
     private HomeActivity _this;
     private Button getBalanceBtn, getTransactionsBtn;
     private TextView resultTxt, helloUserTxt;
@@ -59,6 +63,8 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         _this = this;
+
+        prefs = this.getSharedPreferences(Constants.PREFERENCES_FILE, Context.MODE_PRIVATE);
 
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -76,7 +82,7 @@ public class HomeActivity extends AppCompatActivity {
                 Log.d(activityName, "getPublicDataBtn");
                 URI adapterPath = null;
                 try {
-                    adapterPath = new URI("/adapters/Enrollment/publicData");
+                    adapterPath = new URI("/adapters/ResourceAdapter/publicData");
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
@@ -104,7 +110,7 @@ public class HomeActivity extends AppCompatActivity {
                 Log.d(activityName, "getTransactionsBtn");
                 URI adapterPath = null;
                 try {
-                    adapterPath = new URI("/adapters/Enrollment/transactions");
+                    adapterPath = new URI("/adapters/ResourceAdapter/transactions");
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
@@ -132,7 +138,7 @@ public class HomeActivity extends AppCompatActivity {
                 Log.d(activityName, "getBalanceBtn");
                 URI adapterPath = null;
                 try {
-                    adapterPath = new URI("/adapters/Enrollment/balance");
+                    adapterPath = new URI("/adapters/ResourceAdapter/balance");
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
@@ -213,7 +219,7 @@ public class HomeActivity extends AppCompatActivity {
                 isEnrolled = Boolean.valueOf(wlResponse.getResponseText());
                 if (isEnrolled){
                     Log.d("isEnrolled success: ", Integer.toString(wlResponse.getStatus()));
-                    changeUIState("visible", isEnrolled);
+                    changeUIState("Hello, " + prefs.getString("displayName", "Guest"), "visible", isEnrolled);
                 } else {
                     Log.d("isEnrolled success: ", wlResponse.getResponseText());
                 }
@@ -231,7 +237,7 @@ public class HomeActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_home, menu);
 
-        MenuItem logoutItem = menu.findItem(R.id.action_logout);
+        MenuItem logoutItem = menu.findItem(R.id.action_unenroll);
         MenuItem enrollItem = menu.findItem(R.id.action_enroll);
 
         if (isEnrolled) {
@@ -247,11 +253,9 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_logout:
-                Log.d(activityName, "action_logout");
-                Intent intent = new Intent();
-                intent.setAction(Constants.ACTION_LOGOUT);
-                LocalBroadcastManager.getInstance(_this).sendBroadcast(intent);
+            case R.id.action_unenroll:
+                Log.d(activityName, "action_unenroll");
+                unenroll();
                 return true;
             case R.id.action_enroll:
                 Log.d(activityName, "action_enroll");
@@ -266,7 +270,7 @@ public class HomeActivity extends AppCompatActivity {
     private void enrollAfterFailure(String errorMsg) {
         Log.d(activityName, "enrollAfterFailure");
         if (errorMsg.equals("Account blocked")){
-            changeUIState("invisible", false);
+            changeUIState("Hello, Guest", "invisible", false);
             enroll();
         }
     }
@@ -343,9 +347,7 @@ public class HomeActivity extends AppCompatActivity {
                 });
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent();
-                        intent.setAction(Constants.ACTION_LOGOUT);
-                        LocalBroadcastManager.getInstance(_this).sendBroadcast(intent);
+                        unenroll();
                     }
                 });
                 AlertDialog dialog = builder.create();
@@ -373,7 +375,12 @@ public class HomeActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(WLResponse wlResponse) {
                     Log.d("setPinCode success: ", wlResponse.getResponseText());
-                    changeUIState("visible", true);
+                    try {
+                        prefs.edit().putString("displayName", wlResponse.getResponseJSON().getString("userName")).apply();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    changeUIState("Hello, " + prefs.getString("displayName", "Guest"), "visible", true);
                 }
 
                 @Override
@@ -384,7 +391,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    private void changeUIState(final String buttonsState, final Boolean actionState){
+    private void changeUIState(final String helloUser, final String buttonsState, final Boolean actionState){
         Log.d(activityName, "changeUIState");
         Runnable run = new Runnable() {
             public void run() {
@@ -396,6 +403,7 @@ public class HomeActivity extends AppCompatActivity {
                     getTransactionsBtn.setVisibility(View.INVISIBLE);
                     getBalanceBtn.setVisibility(View.INVISIBLE);
                 }
+                helloUserTxt.setText(helloUser);
                 isEnrolled = actionState;
                 _this.invalidateOptionsMenu();
             }
@@ -410,25 +418,7 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onSuccess() {
                 Log.d("IsEnrolled", "Logout onSuccess");
-                URI adapterPath = null;
-                try {
-                    adapterPath = new URI("/adapters/Enrollment/unenroll");
-                } catch (URISyntaxException e) {
-                    e.printStackTrace();
-                }
-                WLResourceRequest request = new WLResourceRequest(adapterPath, WLResourceRequest.DELETE);
-                request.send(new WLResponseListener() {
-                    @Override
-                    public void onSuccess(WLResponse wlResponse) {
-                        Log.d("deletePinCode success: ", Integer.toString(wlResponse.getStatus()));
-                        changeUIState("invisible", false);
-                    }
-
-                    @Override
-                    public void onFailure(WLFailResponse wlFailResponse) {
-                        Log.d("deletePinCode failure: ", wlFailResponse.getErrorMsg());
-                    }
-                });
+                changeUIState("Hello, Guest", "invisible", false);
             }
 
             @Override
@@ -437,6 +427,32 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void unenroll() {
+        URI adapterPath = null;
+        try {
+            adapterPath = new URI("/adapters/Enrollment/unenroll");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        WLResourceRequest request = new WLResourceRequest(adapterPath, WLResourceRequest.DELETE);
+        request.send(new WLResponseListener() {
+            @Override
+            public void onSuccess(WLResponse wlResponse) {
+                Log.d("unenroll success: ", Integer.toString(wlResponse.getStatus()));
+                Intent intent = new Intent();
+                intent.setAction(Constants.ACTION_LOGOUT);
+                LocalBroadcastManager.getInstance(_this).sendBroadcast(intent);
+            }
+
+            @Override
+            public void onFailure(WLFailResponse wlFailResponse) {
+                Log.d("unenroll failure: ", wlFailResponse.getErrorMsg());
+            }
+        });
+    }
+
 
     public void updateTextView(final String str) {
         Log.d(activityName, "updateTextView");

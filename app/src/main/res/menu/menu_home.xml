@@ -19,9 +19,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.sample.enrollmentandroid.HomeActivity">
     <item
-        android:id="@+id/action_logout"
+        android:id="@+id/action_unenroll"
         android:orderInCategory="100"
-        android:title="@string/action_logout"
+        android:title="@string/action_unenroll"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_enroll"
