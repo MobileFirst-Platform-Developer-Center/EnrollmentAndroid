@@ -16,6 +16,7 @@
 
 package com.sample.enrollmentandroid;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -84,9 +85,16 @@ public class LoginActivity extends AppCompatActivity {
         popLoginPageRequiredReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                finish();
+                popLoginPage(intent.getStringExtra("displayName"));
             }
         };
+    }
+
+    private void popLoginPage(String displayName) {
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra("displayName",displayName);
+        setResult(Activity.RESULT_OK, returnIntent);
+        finish();
     }
 
     @Override

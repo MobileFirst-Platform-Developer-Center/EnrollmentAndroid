@@ -111,6 +111,12 @@ public class UserLoginChallengeHandler extends SecurityCheckChallengeHandler {
         Log.d(securityCheckName, "handleSuccess" + identity.toString());
         isChallenged = false;
         Intent intent = new Intent();
+        try {
+            String userDisplayName = identity.getJSONObject("user").getString("displayName");
+            intent.putExtra("displayName", userDisplayName);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         intent.setAction(Constants.ACTION_USERLOGIN_CHALLENGE_SUCCESS);
         broadcastManager.sendBroadcast(intent);
     }

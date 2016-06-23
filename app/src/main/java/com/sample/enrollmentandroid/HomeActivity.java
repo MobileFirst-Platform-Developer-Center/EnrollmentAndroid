@@ -16,13 +16,13 @@
 
 package com.sample.enrollmentandroid;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -39,32 +39,27 @@ import android.widget.TextView;
 import com.worklight.wlclient.api.WLAccessTokenListener;
 import com.worklight.wlclient.api.WLAuthorizationManager;
 import com.worklight.wlclient.api.WLFailResponse;
-import com.worklight.wlclient.api.WLLogoutResponseListener;
 import com.worklight.wlclient.api.WLResourceRequest;
 import com.worklight.wlclient.api.WLResponse;
 import com.worklight.wlclient.api.WLResponseListener;
 import com.worklight.wlclient.auth.AccessToken;
-
-import org.json.JSONException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
 public class HomeActivity extends AppCompatActivity {
     private final String activityName = "HomeActivity";
+    private String displayName = "Guest";
     private boolean isEnrolled = false;
-    private SharedPreferences prefs;
     private HomeActivity _this;
     private Button getBalanceBtn, getTransactionsBtn;
     private TextView resultTxt, helloUserTxt;
-    private BroadcastReceiver loginRequiredReceiver, picodeRequiredReceiver, enrollmentRequiredReceiver, isEnrolledLogoutRequiredReceiver;
+    private BroadcastReceiver loginRequiredReceiver, picodeRequiredReceiver, enrollmentRequiredReceiver, UIChangeRequiredReciver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         _this = this;
-
-        prefs = this.getSharedPreferences(Constants.PREFERENCES_FILE, Context.MODE_PRIVATE);
 
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -164,7 +159,7 @@ public class HomeActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 Log.d("loginRequiredReceiver","Receive login required requests");
                 Intent loginActivity = new Intent(_this, LoginActivity.class);
-                _this.startActivity(loginActivity);
+                _this.startActivityForResult(loginActivity,Constants.USER_LOGIN);
             }
         };
 
@@ -184,11 +179,16 @@ public class HomeActivity extends AppCompatActivity {
             }
         };
 
-        //Receive isEnrolled logout required requests
-        isEnrolledLogoutRequiredReceiver = new BroadcastReceiver() {
+        //Receive UI change required requests
+        UIChangeRequiredReciver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                isEnrolledLogout();
+                if (intent.getStringExtra("displayName") != null){
+                    displayName = intent.getStringExtra("displayName");
+                    changeUIState("Hello, " + displayName, "visible", true);
+                } else {
+                    changeUIState("Hello, Guest", "invisible", false);
+                }
             }
         };
     }
@@ -204,47 +204,34 @@ public class HomeActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(loginRequiredReceiver, new IntentFilter(Constants.ACTION_USERLOGIN_CHALLENGE_RECEIVED));
         LocalBroadcastManager.getInstance(this).registerReceiver(picodeRequiredReceiver, new IntentFilter(Constants.ACTION_PINCODE_CHALLENGE_RECEIVED));
         LocalBroadcastManager.getInstance(this).registerReceiver(enrollmentRequiredReceiver, new IntentFilter(Constants.ACTION_PINCODE_CHALLENGE_FAILURE));
-        LocalBroadcastManager.getInstance(this).registerReceiver(isEnrolledLogoutRequiredReceiver, new IntentFilter(Constants.ACTION_PINCODE_LOGOUT_SUCCESS));
+        LocalBroadcastManager.getInstance(this).registerReceiver(UIChangeRequiredReciver, new IntentFilter(Constants.ACTION_ISENROLLED_LOGOUT_SUCCESS));
+        LocalBroadcastManager.getInstance(this).registerReceiver(UIChangeRequiredReciver, new IntentFilter(Constants.ACTION_ISENROLLED_CHALLENGE_SUCCESS));
 
-        URI adapterPath = null;
-        try {
-            adapterPath = new URI("/adapters/Enrollment/isEnrolled");
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        WLResourceRequest request = new WLResourceRequest(adapterPath, WLResourceRequest.GET);
-        request.send(new WLResponseListener() {
+        WLAuthorizationManager.getInstance().obtainAccessToken("IsEnrolled", new WLAccessTokenListener() {
             @Override
-            public void onSuccess(WLResponse wlResponse) {
-                isEnrolled = Boolean.valueOf(wlResponse.getResponseText());
-                if (isEnrolled){
-                    Log.d("isEnrolled success: ", Integer.toString(wlResponse.getStatus()));
-                    changeUIState("Hello, " + prefs.getString("displayName", "Guest"), "visible", isEnrolled);
-                } else {
-                    Log.d("isEnrolled success: ", wlResponse.getResponseText());
-                }
+            public void onSuccess(AccessToken accessToken) {
+                Log.d("IsEnrolled", "onSuccess");
             }
 
             @Override
             public void onFailure(WLFailResponse wlFailResponse) {
-                Log.d("isEnrolled failure: ", wlFailResponse.getErrorMsg());
+                Log.d("IsEnrolled", "onFailure: " + wlFailResponse.toString());
             }
         });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_home, menu);
 
-        MenuItem logoutItem = menu.findItem(R.id.action_unenroll);
+        MenuItem unenrollItem = menu.findItem(R.id.action_unenroll);
         MenuItem enrollItem = menu.findItem(R.id.action_enroll);
 
         if (isEnrolled) {
-            logoutItem.setVisible(true);
+            unenrollItem.setVisible(true);
             enrollItem.setVisible(false);
         } else {
-            logoutItem.setVisible(false);
+            unenrollItem.setVisible(false);
             enrollItem.setVisible(true);
         }
         return true;
@@ -313,19 +300,18 @@ public class HomeActivity extends AppCompatActivity {
     private void enroll(){
         Log.d(activityName, "enroll");
         updateTextView("");
-        WLAccessTokenListener MyListener = new WLAccessTokenListener() {
+        WLAuthorizationManager.getInstance().obtainAccessToken("EnrollmentUserLogin", new WLAccessTokenListener() {
             @Override
             public void onSuccess(AccessToken accessToken) {
-                Log.d("obtainAccessToken", "onSuccess");
+                Log.d("enroll", "onSuccess");
                 showSetPincodeDialog("");
             }
 
             @Override
             public void onFailure(WLFailResponse wlFailResponse) {
-                Log.d("obtainAccessToken", "onFailure: " + wlFailResponse.toString());
+                Log.d("enroll", "onFailure: " + wlFailResponse.toString());
             }
-        };
-        WLAuthorizationManager.getInstance().obtainAccessToken("EnrollmentUserLogin", MyListener);
+        });
     }
 
     private void showSetPincodeDialog(final String msg) {
@@ -347,7 +333,9 @@ public class HomeActivity extends AppCompatActivity {
                 });
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        unenroll();
+                        Intent intent = new Intent();
+                        intent.setAction(Constants.ACTION_LOGOUT);
+                        LocalBroadcastManager.getInstance(_this).sendBroadcast(intent);
                     }
                 });
                 AlertDialog dialog = builder.create();
@@ -375,12 +363,7 @@ public class HomeActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(WLResponse wlResponse) {
                     Log.d("setPinCode success: ", wlResponse.getResponseText());
-                    try {
-                        prefs.edit().putString("displayName", wlResponse.getResponseJSON().getString("userName")).apply();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    changeUIState("Hello, " + prefs.getString("displayName", "Guest"), "visible", true);
+                    changeUIState("Hello, " + displayName, "visible", true);
                 }
 
                 @Override
@@ -392,7 +375,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void changeUIState(final String helloUser, final String buttonsState, final Boolean actionState){
-        Log.d(activityName, "changeUIState");
+        Log.d(activityName, "changeUIState: "+helloUser);
         Runnable run = new Runnable() {
             public void run() {
                 resultTxt.setText("");
@@ -412,21 +395,7 @@ public class HomeActivity extends AppCompatActivity {
         _this.runOnUiThread(run);
     }
 
-    private void isEnrolledLogout() {
-        Log.d(activityName, "isEnrolledLogout");
-        WLAuthorizationManager.getInstance().logout("IsEnrolled", new WLLogoutResponseListener() {
-            @Override
-            public void onSuccess() {
-                Log.d("IsEnrolled", "Logout onSuccess");
-                changeUIState("Hello, Guest", "invisible", false);
-            }
 
-            @Override
-            public void onFailure(WLFailResponse wlFailResponse) {
-                Log.d("IsEnrolled", "Logout onFailure: " + wlFailResponse.toString());
-            }
-        });
-    }
 
     private void unenroll() {
         URI adapterPath = null;
@@ -465,12 +434,21 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == Constants.USER_LOGIN) {
+            if(resultCode == Activity.RESULT_OK){
+                displayName = data.getStringExtra("displayName");
+            }
+        }
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         Log.d(activityName, "onPause");
         LocalBroadcastManager.getInstance(this).unregisterReceiver(picodeRequiredReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(loginRequiredReceiver);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(isEnrolledLogoutRequiredReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(enrollmentRequiredReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(UIChangeRequiredReciver);
     }
 }
